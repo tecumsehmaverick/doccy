@@ -102,7 +102,7 @@
 		$ended = false;
 
 		while ($data) {
-			$token = $data->findToken('%^[a-z][a-z0-9]*|(^|\s+)[@#.\%][a-z][a-z0-9\-]*|:\s*|[^:@]+%');
+			$token = $data->findToken('%^[a-z][a-z0-9]*|\s*"(.*?)"|(^|\s+)[@#.\%][a-z][a-z0-9\-]*|:\s*|[^:@"]+%');
 
 			// Ends here:
 			if ($token->value->test('%^:\s*%')) {
@@ -163,7 +163,14 @@
 			else if (!is_null($attribute)) {
 				list($before, $after) = $data->splitAt($token);
 
-				$attributes[$attribute] .= trim($token->value);
+				$value = trim($token->value);
+
+				// Quoted value:
+				if (substr($value, 0, 1) == '"' && substr($value, -1, 1) == '"') {
+					$value = substr($value, 1, -1);
+				}
+
+				$attributes[$attribute] .= $value;
 				$attribute = null;
 				$data = $after;
 				continue;

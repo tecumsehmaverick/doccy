@@ -4,12 +4,12 @@
 
 	$tpl = new Doccy\Template();
 	$tpl->formatOutput = true;
-	$tpl->parseURI('readme.dy');
+	$tpl->parseString("First things first, you'll need a fresh copy of Symphony, so head to {a @href \"http://symphony-cms.com/downloads\": the Symphony webite} then download and extract the latest release.");
 
-	//echo '<pre style="white-space: pre-wrap;">';
+	echo '<pre style="white-space: pre-wrap;">';
 
 	foreach ($tpl->documentElement->childNodes as $node) {
-		echo ($tpl->saveXML($node)), "\n";
+		echo htmlentities($tpl->saveXML($node)), "\n";
 	}
 
 ?>

@@ -46,7 +46,7 @@
 		 * Convert the XML document into a string.
 		 */
 		public function __toString() {
-			$output = null;
+			$output = '';
 
 			foreach ($this->documentElement->childNodes as $node) {
 				$output .= ($this->saveXML($node)) . "\n";
