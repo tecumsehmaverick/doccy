@@ -102,10 +102,10 @@
 		$ended = false;
 
 		while ($data) {
-			$token = $data->findToken('%^[a-z][a-z0-9]*|\s*"(.*?)"|(^|\s+)[@#.\%][a-z][a-z0-9\-]*|:\s*|[^:@"]+%');
+			$token = $data->findToken('%^[a-z][a-z0-9]*|:\s+|(^|\s+)[@#.\%][a-z][a-z0-9\-]*|.+?%');
 
 			// Ends here:
-			if ($token->value->test('%^:\s*%')) {
+			if ($token->value->test('%^:\s+%')) {
 				list($before, $after) = $data->splitAt($token);
 
 				$data = $after;
@@ -117,17 +117,30 @@
 			else if ($token->value->test('%^\s*@%')) {
 				list($before, $after) = $data->splitAt($token);
 
-				$attribute = trim($token->value, '@ ');
+				$attribute = trim($token->value, "@\r\n\t ");
+				$attributes[$attribute] = null;
+				$data = $after;
+				continue;
+			}
+
+			// Data attribute:
+			else if ($token->value->test('%^\s*[\%]%')) {
+				list($before, $after) = $data->splitAt($token);
+
+				$attribute = 'data-' . trim($token->value, "%\r\n\t ");
 				$attributes[$attribute] = null;
 				$data = $after;
 				continue;
 			}
 
 			// Class attribute:
-			else if ($token->value->test('%^\s*[.]%')) {
+			else if (
+				($token->value->test('%^\s*[.]%') && is_null($attribute))
+				|| $token->value->test('%^\s+[.]%')
+			) {
 				list($before, $after) = $data->splitAt($token);
 
-				$value = trim($token->value, '. ');
+				$value = trim($token->value, ".\r\n\t ");
 
 				$attributes['class'] = (
 					isset($attributes['class'])
@@ -139,21 +152,14 @@
 				continue;
 			}
 
-			// Data attribute:
-			else if ($token->value->test('%^\s*[\%]%')) {
-				list($before, $after) = $data->splitAt($token);
-
-				$attribute = 'data-' . trim($token->value, '% ');
-				$attributes[$attribute] = null;
-				$data = $after;
-				continue;
-			}
-
 			// ID attribute:
-			else if ($token->value->test('%^\s*#%')) {
+			else if (
+				($token->value->test('%^\s*#%') && is_null($attribute))
+				|| $token->value->test('%^\s+#%')
+			) {
 				list($before, $after) = $data->splitAt($token);
 
-				$value = trim($token->value, '# ');
+				$value = trim($token->value, "#\r\n\t ");
 				$attributes['id'] = $value;
 				$data = $after;
 				continue;
@@ -163,7 +169,14 @@
 			else if (!is_null($attribute)) {
 				list($before, $after) = $data->splitAt($token);
 
-				$value = trim($token->value);
+				// Trim any spaces off the start:
+				if (strlen($attributes[$attribute]) == 0) {
+					$value = ltrim($token->value);
+				}
+
+				else {
+					$value = $token->value;
+				}
 
 				// Quoted value:
 				if (substr($value, 0, 1) == '"' && substr($value, -1, 1) == '"') {
@@ -171,7 +184,6 @@
 				}
 
 				$attributes[$attribute] .= $value;
-				$attribute = null;
 				$data = $after;
 				continue;
 			}
@@ -197,6 +209,7 @@
 			$parent->appendChild($element);
 
 			foreach ($attributes as $name => $value) {
+
 				$element->setAttribute($name, $value);
 			}
 
