@@ -48,8 +48,8 @@
 		public function __toString() {
 			$output = null;
 
-			foreach ($tpl->documentElement->childNodes as $node) {
-				$output .= ($tpl->saveXML($node)) . "\n";
+			foreach ($this->documentElement->childNodes as $node) {
+				$output .= ($this->saveXML($node)) . "\n";
 			}
 
 			return $output;
