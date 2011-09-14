@@ -111,6 +111,16 @@
 				continue;
 			}
 
+			// ID Attribute:
+			else if ($token->value->test('%^\s*#%')) {
+				list($before, $after) = $data->splitAt($token);
+
+				$value = trim($token->value, '# ');
+				$attributes['id'] = $value;
+				$data = $after;
+				continue;
+			}
+
 			// Attribute value:
 			else if (!is_null($attribute)) {
 				list($before, $after) = $data->splitAt($token);

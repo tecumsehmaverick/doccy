@@ -1,4 +1,4 @@
-{h1: Section Header}
+{h1 #main: Section Header}
 
 This is a test.
 
