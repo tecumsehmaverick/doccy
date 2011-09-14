@@ -17,7 +17,7 @@
 		$skip_next_close = 0;
 
 		while ($data) {
-			$token = $data->findToken('%[{}]|[^{}]+%');
+			$token = $data->findToken('%(\\\[{}])|[{}]|[^{}\\\]+|\\\%');
 
 			// Token position located:
 			if ($token instanceof \Doccy\Utilities\Token) {
@@ -63,6 +63,17 @@
 					continue;
 				}
 
+				// Escaped open/close token:
+				else if ($token->value == '\\{' || $token->value == '\\}') {
+					list($before, $after) = $data->splitAt($token);
+
+					$node = $parent->ownerDocument->createTextNode(trim($token->value, '\\'));
+					$parent->appendChild($node);
+
+					$data = $after;
+					continue;
+				}
+
 				// Text:
 				else {
 					list($before, $after) = $data->splitAt($token);
@@ -91,7 +102,7 @@
 		$ended = false;
 
 		while ($data) {
-			$token = $data->findToken('%^[a-z][a-z0-9]*|(^|\s+)[@#.][a-z]+|:\s*|[^:@]+%');
+			$token = $data->findToken('%^[a-z][a-z0-9]*|(^|\s+)[@#.\%][a-z][a-z0-9\-]*|:\s*|[^:@]+%');
 
 			// Ends here:
 			if ($token->value->test('%^:\s*%')) {
@@ -124,6 +135,16 @@
 						: $value
 				);
 
+				$data = $after;
+				continue;
+			}
+
+			// Data attribute:
+			else if ($token->value->test('%^\s*[\%]%')) {
+				list($before, $after) = $data->splitAt($token);
+
+				$attribute = 'data-' . trim($token->value, '% ');
+				$attributes[$attribute] = null;
 				$data = $after;
 				continue;
 			}

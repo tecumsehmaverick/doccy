@@ -9,7 +9,7 @@
 	echo '<pre>';
 
 	foreach ($tpl->documentElement->childNodes as $node) {
-		echo htmlentities($tpl->saveXML($node));
+		echo htmlentities($tpl->saveXML($node)), "\n";
 	}
 
 ?>
