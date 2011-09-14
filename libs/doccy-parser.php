@@ -90,7 +90,7 @@
 		$ended = false;
 
 		while ($data) {
-			$token = $data->findToken('%^[a-z][a-z0-9]*|(^|\s+)@[a-z]+|:\s*|[^:@]+%');
+			$token = $data->findToken('%^[a-z][a-z0-9]*|(^|\s+)[@#.][a-z]+|:\s*|[^:@]+%');
 
 			// Ends here:
 			if ($token->value->test('%^:\s*%')) {
@@ -111,7 +111,23 @@
 				continue;
 			}
 
-			// ID Attribute:
+			// Class attribute:
+			else if ($token->value->test('%^\s*[.]%')) {
+				list($before, $after) = $data->splitAt($token);
+
+				$value = trim($token->value, '. ');
+
+				$attributes['class'] = (
+					isset($attributes['class'])
+						? $attributes['class'] . ' ' . $value
+						: $value
+				);
+
+				$data = $after;
+				continue;
+			}
+
+			// ID attribute:
 			else if ($token->value->test('%^\s*#%')) {
 				list($before, $after) = $data->splitAt($token);
 
