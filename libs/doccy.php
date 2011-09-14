@@ -27,7 +27,8 @@
 				$this->createElement('data')
 			);
 
-			Parser\main($data, $this->documentElement);
+			Parser\main($data, $this);
+			Utilities\wrapFloatingText($this);
 		}
 	}
 

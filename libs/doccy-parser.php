@@ -12,7 +12,8 @@
 	 * @param Doccy\Utilities\Data	$data
 	 * @param DOMElement			$parent
 	 */
-	function main(\Doccy\Utilities\Data $data, \DOMElement $parent) {
+	function main(\Doccy\Utilities\Data $data, \Doccy\Template $template) {
+		$parent = $template->documentElement;
 		$skip_next_close = 0;
 
 		while ($data) {

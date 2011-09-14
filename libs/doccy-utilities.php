@@ -94,3 +94,101 @@
 			return (boolean)preg_match($expression, $this->data);
 		}
 	}
+
+	/**
+	 * Wrap floating pieces of text in paragraph elements.
+	 *
+	 * @param DOMDocument $document
+	 */
+	function wrapFloatingText(\DOMDocument $document) {
+		$xpath = new \DOMXPath($document);
+		$nodes = array(); $breaks = array(
+			'section', 'article', 'aside', 'header', 'footer', 'nav',
+			'dialog', 'figure', 'address', 'p', 'hr', 'pre',
+			'blockquote', 'ol', 'ul', 'li', 'dl', 'dt', 'dd', 'img',
+			'iframe', 'embed', 'object', 'param', 'video', 'audio',
+			'source', 'canvas', 'map', 'area', 'table', 'caption',
+			'colgroup', 'col', 'tbody', 'thead', 'tfoot', 'tr', 'td',
+			'th', 'form', 'fieldset', 'label', 'input', 'button',
+			'select', 'datalist', 'optgroup', 'option', 'textarea',
+			'keygen', 'output', 'details', 'datagrid', 'command',
+			'bb', 'menu', 'legend', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'
+		);
+
+		// Find nodes that may contain paragraphs:
+		foreach ($xpath->query('
+			//data
+			| //blockquote
+			| //div
+			| //header
+			| //footer
+			| //aside
+			| //article
+			| //section
+		') as $node) {
+			array_unshift($nodes, $node);
+		}
+
+		// Loop through the nodes, now in reverse order:
+		foreach ($nodes as $node) {
+			$default = array(
+				'type'	=> 'inline',
+				'value'	=> ''
+			);
+			$groups = array($default);
+			$content = '';
+
+			// Group text between paragraph breaks:
+			foreach ($node->childNodes as $child) {
+				if (in_array($child->nodeName, $breaks)) {
+					array_push($groups,
+						array(
+							'type'	=> 'break',
+							'value'	=> $document->saveXML($child)
+						)
+					);
+
+					array_push($groups, $default);
+				}
+
+				else {
+					$current = array_pop($groups);
+					$current['value'] .= $document->saveXML($child);
+					array_push($groups, $current);
+				}
+			}
+
+			// Join together again:
+			foreach ($groups as $current) {
+				if ($current['type'] == 'break') {
+					$content .= $current['value'];
+				}
+
+				else if (trim($current['value'])) {
+					$value = preg_replace('/((\r\n|\n)\s*){2,}/', "</p><p>", trim($current['value']));
+					$value = preg_replace('/[\r\n\t](?<=\S)/', '<br />', $value);
+					$value = preg_replace('/\s{2,}/', ' ', $value);
+
+					$content .= "<p>$value</p>";
+				}
+			}
+
+			// Remove children:
+			while ($node->hasChildNodes()) {
+				$node->removeChild($node->firstChild);
+			}
+
+			// Replace content:
+			if ($content) {
+				try {
+					$fragment = $document->createDocumentFragment();
+					$fragment->appendXML($content);
+					$node->appendChild($fragment);
+				}
+
+				catch (Exception $e) {
+					// Ignore...
+				}
+			}
+		}
+	}
