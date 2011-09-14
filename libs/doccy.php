@@ -33,7 +33,7 @@
 		 * @param string $input
 		 */
 		public function parseString($input) {
-			$data = new \Doccy\Utilities\Data(input);
+			$data = new \Doccy\Utilities\Data($input);
 			$this->appendChild(
 				$this->createElement('data')
 			);
