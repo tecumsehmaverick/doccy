@@ -30,6 +30,10 @@ What about attributes, element IDs and class names?
 	{dd: Finally, you can specify the ID attribute of an element using the hash symbol ({code: #}) followed by the value of the id: {code: #main-header}.}
 }
 
+Ok, but how on earth do you write Doccy syntax inside of a Doccy document? Simple actually, just escape using the backslash symbol:
+
+{pre: \\{code: \\\{p: For example.\\\}\\}}
+
 
 {h2: Examples}
 
