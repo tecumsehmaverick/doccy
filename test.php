@@ -4,9 +4,9 @@
 
 	$tpl = new Doccy\Template();
 	$tpl->formatOutput = true;
-	$tpl->openURI('test.txt');
+	$tpl->openURI('readme.dy');
 
-	echo '<pre>';
+	echo '<pre style="white-space: pre-wrap;">';
 
 	foreach ($tpl->documentElement->childNodes as $node) {
 		echo htmlentities($tpl->saveXML($node)), "\n";
