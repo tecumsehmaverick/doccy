@@ -1,4 +1,4 @@
-{h1 #main .shiiiit.me: Section Header}
+{h1#main.oh.shit: Section Header}
 
 This is a test.
 
