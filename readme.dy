@@ -34,6 +34,10 @@ Ok, but how on earth do you write Doccy syntax inside of a Doccy document? Simpl
 
 {pre: \\{code: \\\{p: For example.\\\}\\}}
 
+Also, if you're not using the above described element syntax, there's no need to use backslashes to escape:
+
+{pre: {this is perfectly fine.}}
+
 
 {h2: Examples}
 

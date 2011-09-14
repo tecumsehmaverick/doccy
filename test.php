@@ -4,7 +4,7 @@
 
 	$tpl = new Doccy\Template();
 	$tpl->formatOutput = true;
-	$tpl->openURI('readme.dy');
+	$tpl->parseURI('readme.dy');
 
 	//echo '<pre style="white-space: pre-wrap;">';
 
