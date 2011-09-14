@@ -6,10 +6,10 @@
 	$tpl->formatOutput = true;
 	$tpl->openURI('readme.dy');
 
-	echo '<pre style="white-space: pre-wrap;">';
+	//echo '<pre style="white-space: pre-wrap;">';
 
 	foreach ($tpl->documentElement->childNodes as $node) {
-		echo htmlentities($tpl->saveXML($node)), "\n";
+		echo ($tpl->saveXML($node)), "\n";
 	}
 
 ?>
