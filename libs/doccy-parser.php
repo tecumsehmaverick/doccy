@@ -16,7 +16,7 @@
 		$parent = $template->documentElement;
 		$skip_next_close = 0;
 
-		while ($data) {
+		while ($data->valid()) {
 			$token = $data->findToken('%(\\\[{}])|[{}]|[^{}\\\]+|\\\%');
 
 			// Token position located:
@@ -101,8 +101,14 @@
 		$name = $attribute = null;
 		$ended = false;
 
-		while ($data) {
+		while ($data->valid()) {
 			$token = $data->findToken('%^[a-z][a-z0-9]*|:\s+|(^|\s+)[@#.\%][a-z][a-z0-9\-]*|.+?%');
+
+			// Token position located:
+			if (!$token instanceof \Doccy\Utilities\Token) {
+				var_dump($data); exit;
+				break;
+			}
 
 			// Ends here:
 			if ($token->value->test('%^:\s+%')) {

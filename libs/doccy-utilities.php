@@ -7,27 +7,6 @@
 	namespace Doccy\Utilities;
 
 	/**
-	 * Represents a value discovered in data, including the position and length.
-	 */
-	class Token {
-		public $length;
-		public $position;
-		public $value;
-
-		/**
-		 * Create a new Token object.
-		 *
-		 * @param Data		$value
-		 * @param integer	$position
-		 */
-		public function __construct(Data $value, $position) {
-			$this->length = strlen($value);
-			$this->position = $position;
-			$this->value = $value;
-		}
-	}
-
-	/**
 	 * Represents a chunk of a Doccy template.
 	 */
 	class Data {
@@ -92,6 +71,36 @@
 		 */
 		public function test($expression) {
 			return (boolean)preg_match($expression, $this->data);
+		}
+
+		/**
+		 * Is there more data to parse?
+		 *
+		 * @return boolean
+		 */
+		public function valid() {
+			return empty($this->data) === false;
+		}
+	}
+
+	/**
+	 * Represents a value discovered in data, including the position and length.
+	 */
+	class Token {
+		public $length;
+		public $position;
+		public $value;
+
+		/**
+		 * Create a new Token object.
+		 *
+		 * @param Data		$value
+		 * @param integer	$position
+		 */
+		public function __construct(Data $value, $position) {
+			$this->length = strlen($value);
+			$this->position = $position;
+			$this->value = $value;
 		}
 	}
 
