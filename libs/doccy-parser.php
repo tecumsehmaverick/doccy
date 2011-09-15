@@ -106,7 +106,6 @@
 
 			// Token position located:
 			if (!$token instanceof \Doccy\Utilities\Token) {
-				var_dump($data); exit;
 				break;
 			}
 
