@@ -17,14 +17,14 @@
 		 *
 		 * @param string $uri
 		 */
-		public function parseURI($uri) {
+		public function parseURI($uri, Utilities\Options $options = null) {
 			if (file_exists($uri) === false) {
 				throw new Exception(sprintf(
 					"File '%s' does not exist.", $uri
 				));
 			}
 
-			$this->parseString(file_get_contents($uri));
+			$this->parseString(file_get_contents($uri), $options);
 		}
 
 		/**
@@ -32,14 +32,19 @@
 		 *
 		 * @param string $input
 		 */
-		public function parseString($input) {
+		public function parseString($input, Utilities\Options $options = null) {
 			$data = new \Doccy\Utilities\Data($input);
 			$this->appendChild(
 				$this->createElement('data')
 			);
 
+			if ($options === null) {
+				$options = new Utilities\Options();
+			}
+
 			Parser\main($data, $this);
-			Utilities\wrapFloatingText($this);
+			Utilities\wrapFloatingText($this, $options);
+			Utilities\prettifyTextNodes($this, $options);
 		}
 
 		/**
