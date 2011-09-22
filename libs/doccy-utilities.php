@@ -322,8 +322,6 @@
 				);
 			}
 
-			var_dump($options->pretty_ellipses);
-
 			// Make ellipses pretty:
 			if ($options->pretty_ellipses) {
 				$search = array_merge(

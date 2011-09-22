@@ -45,8 +45,6 @@
 			Parser\main($data, $this);
 			Utilities\wrapFloatingText($this, $options);
 			Utilities\prettifyTextNodes($this, $options);
-
-			echo $this; exit;
 		}
 
 		/**
