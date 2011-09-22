@@ -106,14 +106,19 @@
 		public $prevent_widowed_words = true;
 
 		/**
-		 * Convert three full stops (...) into elipses.
+		 * Convert three full stops (...) into ellipses.
 		 */
-		public $pretty_elipses = true;
+		public $pretty_ellipses = true;
 
 		/**
 		 * Convert double hyphens (--) into mdashes.
 		 */
 		public $pretty_hyphens = true;
+
+		/**
+		 * Convert quotation marks to typographers quotation marks
+		 */
+		public $pretty_quotation_marks = true;
 	}
 
 	/**
@@ -262,7 +267,7 @@
 			}
 
 			// Make quotation marks pretty:
-			if ($options->convert_textual_elements) {
+			if ($options->pretty_quotation_marks) {
 				$search = array_merge(
 					$search,
 					array(
@@ -316,6 +321,8 @@
 					)
 				);
 			}
+
+			var_dump($options->pretty_ellipses);
 
 			// Make ellipses pretty:
 			if ($options->pretty_ellipses) {
