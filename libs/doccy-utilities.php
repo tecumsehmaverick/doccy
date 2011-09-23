@@ -366,10 +366,6 @@
 		// Find all text nodes:
 		$nodes = $xpath->query('//text()');
 
-		foreach ($replace as &$val) {
-			$val = html_entity_decode($val, ENT_QUOTES, 'UTF-8');
-		}
-
 		foreach ($nodes as $index => $node) {
 			if ($node->parentNode->isPrettyPrintable() === false) continue;
 
@@ -416,8 +412,6 @@
 			}
 
 			$value = preg_replace($search, $replace, $value);
-
-			//var_dump($value);
 
 			// Markup may have been added, replace with fragment:
 			if ($options->convert_textual_elements) {
