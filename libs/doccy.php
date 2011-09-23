@@ -108,6 +108,7 @@
 		 */
 		public function isBlockLevel() {
 			switch (strtolower($this->nodeName)) {
+				case 'data':
 				case 'a':
 				case 'abbr':
 				case 'acronym':
@@ -126,14 +127,29 @@
 				case 'q':
 				case 'sub':
 				case 'sup':
-				case 'th':
-				case 'td':
-				case 'dt':
-				case 'dd':
-				case 'li':
+				case 'code':
+				case 'samp':
+				case 'kbd':
+				case 'var':
 					return false;
 			}
 
 			return true;
+		}
+
+		/**
+		 * Does this element contain list items?
+		 *
+		 * @return boolean
+		 */
+		public function isListElement() {
+			switch (strtolower($this->nodeName)) {
+				case 'ol':
+				case 'ul':
+				case 'dl':
+					return true;
+			}
+
+			return false;
 		}
 	}

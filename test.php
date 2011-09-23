@@ -5,13 +5,14 @@
 	$start = microtime(true);
 	$tpl = new Doccy\Template();
 	$tpl->formatOutput = true;
-	$tpl->parseString("First \"things\" first, CSS(those things) - you'll -- 'need a {code: {em: fresh -- copy}} of & Symphony', so «head» to {a @href http://symphony-cms.com/downloads: the Symphony webite} then download and extract the ... latest release.");
-
-	echo '<pre style="white-space: pre-wrap;">';
+	//$tpl->parseString("{p: {em: and finally a colon {code: :dsaasd dsdaasd}}}");
+	$tpl->parseURI('readme.dcy');
 
 	foreach ($tpl->documentElement->childNodes as $node) {
-		echo htmlentities($tpl->saveXML($node), ENT_NOQUOTES, 'UTF-8'), "\n";
+		echo ($tpl->saveXML($node)), "\n";
 	}
+
+	echo '<pre style="white-space: pre-wrap;">';
 
 	printf(
 		"\nExecuted in %.6f seconds using %.2fMB of memory.</pre>",

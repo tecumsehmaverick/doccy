@@ -363,65 +363,92 @@
 			);
 		}
 
-		// Find all text nodes:
-		$nodes = $xpath->query('//text()');
+		// Find all block elements:
+		foreach ($xpath->query('//*') as $node) {
+			if ($node->isBlockLevel() === false) continue;
 
-		foreach ($nodes as $index => $node) {
-			if ($node->parentNode->isPrettyPrintable() === false) continue;
-
-			$value = $node->nodeValue;
-
-			// Escape nasties:
-			if ($options->convert_textual_elements) {
-				$value = str_replace(
-					array('&', '<', '>'),
-					array('&amp;', '&lt;', '&gt;'),
-					$value
-				);
+			// Don't prettify blocks that contain blocks:
+			foreach ($xpath->query('.//*', $node) as $child) {
+				if ($child->isBlockLevel()) {
+					continue 2;
+				}
 			}
 
-			// Prevent widowed words:
-			if ($options->prevent_widowed_words) {
-				/**
-				 * Find the last text node in a sentence and
-				 * prevent widowed words.
-				 *
-				 * This implementation is imperfect, The following
-				 * situations would not result in expected behaviour:
-				 *
-				 *	<p><em>This will not be escaped</em></p>
-				 *	<p>This will not <em>be escaped</em></p>
-				 */
+			// Find all text nodes beneath this element:
+			$texts = $xpath->query('.//text()', $node);
+			$index = $texts->length - 1;
+			$search_for_widowed_word = 1;
+
+			// Work through text nodes backwards:
+			while ($text = $texts->item($index)) {
+				$value = $text->nodeValue;
+
+				// Prevent widowed words:
 				if (
-					$node->nextSibling === null
-					&& $node->parentNode->isBlockLevel()
-					&& trim($value)
+					$options->prevent_widowed_words
+					&& $search_for_widowed_word
 				) {
-					$value = preg_replace(
-						'/((^|\s)\S{0,20})\s(\S{0,20})$/',
-						utf8_encode("\\1\xa0\\3"),
-						$value
-					);
+					// We've already skipped a good sized "word":
+					if ($search_for_widowed_word > 16) {
+						$search_for_widowed_word = false;
+					}
+
+					// We've got a text node that is pretty printable,
+					// contains at least one space, and is either right
+					// before a long word, or is a word itself.
+					else if (
+						$text->parentNode->isPrettyPrintable()
+						&& preg_match('/\s/', $value)
+						&& (
+							trim($value)
+							|| $search_for_widowed_word > 1
+						)
+					) {
+						$value = preg_replace(
+							'/((^|\s)\S{0,20})\s(\S{0,20})$/',
+							//utf8_encode("\\1\xa0\\3"),
+							'\1★\3',
+							$value
+						);
+
+						$search_for_widowed_word = false;
+					}
+
+					// Count the number of characters skipped so we
+					// don't put the non-breaking space at the start
+					// of a massive long word.
+					else {
+						$search_for_widowed_word += strlen(trim($value));
+					}
 				}
 
-				else {
-					/**
-					 * @todo Alternate implementation?
-					 */
+				// Other pretty printing:
+				if ($text->parentNode->isPrettyPrintable()) {
+					// Escape nasties:
+					if ($options->convert_textual_elements) {
+						$value = str_replace(
+							array('&', '<', '>'),
+							array('&amp;', '&lt;', '&gt;'),
+							$value
+						);
+					}
+
+					// Apply prettification rules:
+					$value = preg_replace($search, $replace, $value);
+
+					// Markup may have been added, replace with fragment:
+					if ($options->convert_textual_elements) {
+						$fragment = $document->createDocumentFragment();
+						$fragment->appendXML($value);
+						$text->parentNode->replaceChild($fragment, $node);
+					}
+
+					else {
+						$text->nodeValue = $value;
+					}
 				}
-			}
 
-			$value = preg_replace($search, $replace, $value);
-
-			// Markup may have been added, replace with fragment:
-			if ($options->convert_textual_elements) {
-				$fragment = $document->createDocumentFragment();
-				$fragment->appendXML($value);
-				$node->parentNode->replaceChild($fragment, $node);
-			}
-
-			else {
-				$node->nodeValue = $value;
+				$index--;
 			}
 		}
 	}
