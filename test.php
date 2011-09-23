@@ -9,7 +9,7 @@
 	echo '<pre style="white-space: pre-wrap;">';
 
 	foreach ($tpl->documentElement->childNodes as $node) {
-		echo htmlentities($tpl->saveXML($node)), "\n";
+		echo htmlentities($tpl->saveXML($node), ENT_NOQUOTES, 'UTF-8'), "\n";
 	}
 
 ?>

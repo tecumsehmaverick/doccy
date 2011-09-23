@@ -9,8 +9,8 @@
 	/**
 	 * Main Doccy parser loop, finds the start and end of elements.
 	 *
-	 * @param Doccy\Utilities\Data	$data
-	 * @param DOMElement			$parent
+	 * @param Doccy\Utilities\Data $data
+	 * @param DOMElement $parent
 	 */
 	function main(\Doccy\Utilities\Data $data, \Doccy\Template $template) {
 		$parent = $template->documentElement;
@@ -93,8 +93,8 @@
 	/**
 	 * Parse the start of a Doccy tag, including attributes and element ID.
 	 *
-	 * @param Doccy\Utilities\Data	$data
-	 * @param DOMElement			$parent
+	 * @param Doccy\Utilities\Data $data
+	 * @param DOMElement $parent
 	 */
 	function openTag(\Doccy\Utilities\Data $data, \DOMElement $parent) {
 		$attributes = array();
@@ -205,16 +205,17 @@
 			break;
 		}
 
+		// Not a valid element:
 		if (is_null($name) || $ended === false) {
 			return false;
 		}
 
+		// Add element and attributes:
 		else {
 			$element = $parent->ownerDocument->createElement($name);
 			$parent->appendChild($element);
 
 			foreach ($attributes as $name => $value) {
-
 				$element->setAttribute($name, $value);
 			}
 

@@ -132,8 +132,8 @@
 		/**
 		 * Create a new Token object.
 		 *
-		 * @param Data		$value
-		 * @param integer	$position
+		 * @param Data $value
+		 * @param integer $position
 		 */
 		public function __construct(Data $value, $position) {
 			$this->length = strlen($value);
@@ -248,7 +248,13 @@
 	function prettifyTextNodes(\DOMDocument $document, Options $options) {
 		$xpath = new \DOMXPath($document);
 		$nodes = array();
-		$results = $xpath->query('//address | //caption | //td | //th | //h1 | //h2 | //h3 | //h4 | //h5 | //h6 | //li | //dt | //dd | //p');
+		$results = $xpath->query('
+			//address | //caption
+			| //td | //th
+			| //h1 | //h2 | //h3 | //h4 | //h5 | //h6
+			| //li | //dt | //dd
+			| //p
+		');
 
 		// Find nodes that may contain prettyable bits:
 		foreach ($results as $node) {
@@ -271,21 +277,21 @@
 				$search = array_merge(
 					$search,
 					array(
-						'/(\w)\'(\w)|(\s)\'(\d+\w?)\b(?!\')/',				// apostrophe's
-						'/(\S)\'(?=\s|[[:punct:]]|<|$)/',					// single closing
-						'/\'/',												// single opening
-						'/(\S)\"(?=\s|[[:punct:]]|<|$)/',					// double closing
-						'/"/',												// double opening
+						'/(\w)\'(\w)|(\s)\'(\d+\w?)\b(?!\')/',	// apostrophe's
+						'/(\S)\'(?=\s|[[:punct:]]|<|$)/',		// single closing
+						'/\'/',									// single opening
+						'/(\S)\"(?=\s|[[:punct:]]|<|$)/',		// double closing
+						'/"/',									// double opening
 					)
 				);
 				$replace = array_merge(
 					$replace,
 					array(
-						'\1&#8217;\2',										// apostrophe's
-						'\1&#8217;',										// single closing
-						'&#8216;',											// single opening
-						'\1&#8221;',										// double closing
-						'&#8220;',											// double opening
+						'\1&#8217;\2',							// apostrophe's
+						'\1&#8217;',							// single closing
+						'&#8216;',								// single opening
+						'\1&#8221;',							// double closing
+						'&#8220;',								// double opening
 					)
 				);
 			}
@@ -343,15 +349,15 @@
 				$search = array_merge(
 					$search,
 					array(
-						'/--/',						// em dash
-						'/-/',						// en dash
+						'/--/',			// em dash
+						'/-/',			// en dash
 					)
 				);
 				$replace = array_merge(
 					$replace,
 					array(
-						'&#8212;',					// em dash
-						'&#8211;',					// en dash
+						'&#8212;',		// em dash
+						'&#8211;',		// en dash
 					)
 				);
 			}
@@ -362,10 +368,15 @@
 
 				foreach ($lines as $line) {
 					// Skip over code samples:
-					if (preg_match('/^<(pre|code)/i', $line)) $apply = false;
-					else if (preg_match('/$<\/(pre|code)>/i', $line)) $apply = true;
+					if (preg_match('/^<(pre|code)/i', $line)) {
+						$apply = false;
+					}
 
-					if ($apply and !preg_match("/<.*>/", $line)) {
+					else if (preg_match('/$<\/(pre|code)>/i', $line)) {
+						$apply = true;
+					}
+
+					if ($apply && !preg_match("/<.*>/", $line)) {
 						$line = preg_replace($search, $replace, $line);
 					}
 
