@@ -242,13 +242,98 @@
 
 	function prettyPrint(\Doccy\Template $document, Options $options) {
 		$xpath = new \DOMXPath($document);
+		$primary_search = $primary_replace = array();
+		$secondary_search = $secondary_replace = array();
 
+		// Make quotation marks pretty:
+		if ($options->pretty_quotation_marks) {
+			$primary_search += array(
+				10 => '/(\w)\'(\w)|(\s)\'(\d+\w?)\b(?!\')/',	// apostrophe's
+				11 => '/(\S)\'(?=\s|[[:punct:]]|<|$)/',			// single closing
+				12 => '/\'/',									// single opening
+				13 => '/(\S)\"(?=\s|[[:punct:]]|<|$)/',			// double closing
+				14 => '/"/'										// double opening
+			);
+			$primary_replace += array(
+				10 => '\1&#8217;\2',							// apostrophe's
+				11 => '\1&#8217;',								// single closing
+				12 => '&#8216;',								// single opening
+				13 => '\1&#8221;',								// double closing
+				14 => '&#8220;'									// double opening
+			);
+		}
+
+		// Make sentences pretty:
+		if ($options->double_sentence_spacing) {
+			$primary_search += array(
+				20 => '/([!?.])(?:[ ])/'
+			);
+			$primary_replace += array(
+				20 => '\1&#160; '
+			);
+		}
+
+		// Make acronyms pretty:
+		if ($options->convert_textual_elements) {
+			$primary_search += array(
+				30 => '/\b([A-Z][A-Z0-9]{2,})\b(?:[(]([^)]*)[)])/'
+			);
+			$primary_replace += array(
+				30 => '<acronym title="\2">\1</acronym>'
+			);
+		}
+
+		// Make ellipses pretty:
+		if ($options->pretty_ellipses) {
+			$primary_search += array(
+				40 => '/\.{3}/'
+			);
+			$primary_replace += array(
+				40 => '\1&#8230;'
+			);
+		}
+
+		// Make hyphens pretty:
+		if ($options->pretty_hyphens) {
+			$primary_search += array(
+				50 => '/--/',		// em dash
+				51 => '/-/'			// en dash
+			);
+			$primary_replace += array(
+				50 => '&#8212;',	// em dash
+				51 => '&#8211;'		// en dash
+			);
+		}
+
+		// Prevent widows:
+		if ($options->prevent_widowed_words) {
+			$secondary_search += array(
+				10 => '/((^|\s)\S{0,20})\s(\S{0,20})$/'
+			);
+			$secondary_replace += array(
+				10 => '\1&#160;\3'
+			);
+		}
+
+		var_dump($primary_search, $primary_replace);
+
+		// Find all elements:
 		foreach ($xpath->query('//*') as $node) {
 			if ($node->isPrettyPrintable() === false) continue;
 
+			// Cancel any operations that cannot span block level:
+			if ($node->isBlockLevel()) {
+				$single_quote_open = $double_quote_open = false;
+			}
+
 			// Find all text nodes:
 			foreach ($xpath->query('text()', $node) as $text) {
-				var_dump($text->nodeValue);
+				$value = $text->nodeValue;
+
+				$value = preg_replace($primary_search, $primary_replace, $value);
+				$value = preg_replace($secondary_search, $secondary_replace, $value);
+
+				$text->nodeValue = $value;
 			}
 		}
 	}

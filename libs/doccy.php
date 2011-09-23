@@ -104,7 +104,7 @@
 		 *
 		 * @return boolean
 		 */
-		public function isBlockElement() {
+		public function isBlockLevel() {
 
 		}
 	}
