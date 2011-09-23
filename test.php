@@ -5,14 +5,13 @@
 	$start = microtime(true);
 	$tpl = new Doccy\Template();
 	$tpl->formatOutput = true;
-	//$tpl->parseString("{p: {em: and finally a colon {code: :dsaasd dsdaasd}}}");
 	$tpl->parseURI('readme.dcy');
 
-	foreach ($tpl->documentElement->childNodes as $node) {
-		echo ($tpl->saveXML($node)), "\n";
-	}
-
 	echo '<pre style="white-space: pre-wrap;">';
+
+	foreach ($tpl->documentElement->childNodes as $node) {
+		echo htmlentities($tpl->saveXML($node), ENT_NOQUOTES, 'UTF-8');
+	}
 
 	printf(
 		"\nExecuted in %.6f seconds using %.2fMB of memory.</pre>",

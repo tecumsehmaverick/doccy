@@ -1,7 +1,0 @@
-{h1#main.oh.shit: Section Header}
-
-\{em: This won't be parsed.\}
-
-This is a test.
-
-And this too.

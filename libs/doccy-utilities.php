@@ -363,92 +363,117 @@
 			);
 		}
 
-		// Find all block elements:
+		// Prettify text nodes:
+		foreach ($xpath->query('//text()') as $text) {
+			if ($text->parentNode->isPrettyPrintable() === false) continue;
+
+			$value = $text->nodeValue;
+
+			// Escape nasties:
+			if ($options->convert_textual_elements) {
+				$value = str_replace(
+					array('&', '<', '>'),
+					array('&amp;', '&lt;', '&gt;'),
+					$value
+				);
+			}
+
+			// Apply prettification rules:
+			$value = preg_replace($search, $replace, $value);
+
+			// Markup may have been added, replace with fragment:
+			if ($options->convert_textual_elements) {
+				$fragment = $document->createDocumentFragment();
+				$fragment->appendXML($value);
+				$text->parentNode->replaceChild($fragment, $node);
+			}
+
+			else {
+				$text->nodeValue = $value;
+			}
+		}
+
+		// Whitespace cleanup:
 		foreach ($xpath->query('//*') as $node) {
 			if ($node->isBlockLevel() === false) continue;
+			if ($node->isPrettyPrintable() === false) continue;
 
-			// Don't prettify blocks that contain blocks:
-			foreach ($xpath->query('.//*', $node) as $child) {
-				if ($child->isBlockLevel()) {
-					continue 2;
+			$widow_text = null;
+
+			// Find the last text node that could
+			// potentially be a widowed word:
+			foreach ($node->childNodes as $child) {
+				if ($child instanceof \Doccy\Element) {
+					if (
+						$options->prevent_widowed_words
+						&& $child->isBlockLevel() === false
+						&& $child->isPrettyPrintable()
+					) {
+						foreach ($xpath->query('.//text()', $child) as $text) {
+							if (preg_match('/\s/', $text->nodeValue)) {
+								$widow_text = $text;
+							}
+						}
+					}
+				}
+
+				// Trim unwanted space off the ends:
+				else if ($child instanceof \DOMText) {
+					$child->nodeValue = preg_replace('/^\s+|\s+$/', ' ', $child->nodeValue);
+
+					if (!trim($child->nodeValue)) {
+						$child->nodeValue = '';
+					}
+
+					if (
+						$options->prevent_widowed_words
+						&& preg_match('/\s/', $child->nodeValue)
+					) {
+						$widow_text = $child;
+					}
 				}
 			}
 
-			// Find all text nodes beneath this element:
-			$texts = $xpath->query('.//text()', $node);
-			$index = $texts->length - 1;
-			$search_for_widowed_word = 1;
-
-			// Work through text nodes backwards:
-			while ($text = $texts->item($index)) {
+			// Insert a non-breaking space to prevent widowed words
+			// at the end of sentences.
+			if (
+				$options->prevent_widowed_words
+				&& $widow_text !== null
+			) {
+				$text = $widow_text;
 				$value = $text->nodeValue;
+				$regex = null;
 
-				// Prevent widowed words:
+				// Before a block element:
 				if (
-					$options->prevent_widowed_words
-					&& $search_for_widowed_word
+					$text->nextSibling instanceof \Doccy\Element
+					&& $text->nextSibling->isBlockLevel()
 				) {
-					// We've already skipped a good sized "word":
-					if ($search_for_widowed_word > 16) {
-						$search_for_widowed_word = false;
-					}
-
-					// We've got a text node that is pretty printable,
-					// contains at least one space, and is either right
-					// before a long word, or is a word itself.
-					else if (
-						$text->parentNode->isPrettyPrintable()
-						&& preg_match('/\s/', $value)
-						&& (
-							trim($value)
-							|| $search_for_widowed_word > 1
-						)
-					) {
-						$value = preg_replace(
-							'/((^|\s)\S{0,20})\s(\S{0,20})$/',
-							//utf8_encode("\\1\xa0\\3"),
-							'\1★\3',
-							$value
-						);
-
-						$search_for_widowed_word = false;
-					}
-
-					// Count the number of characters skipped so we
-					// don't put the non-breaking space at the start
-					// of a massive long word.
-					else {
-						$search_for_widowed_word += strlen(trim($value));
-					}
+					$regex = '/((^|\s)\S{0,20})\s(\S{1,20}\s?)$/';
 				}
 
-				// Other pretty printing:
-				if ($text->parentNode->isPrettyPrintable()) {
-					// Escape nasties:
-					if ($options->convert_textual_elements) {
-						$value = str_replace(
-							array('&', '<', '>'),
-							array('&amp;', '&lt;', '&gt;'),
-							$value
-						);
-					}
-
-					// Apply prettification rules:
-					$value = preg_replace($search, $replace, $value);
-
-					// Markup may have been added, replace with fragment:
-					if ($options->convert_textual_elements) {
-						$fragment = $document->createDocumentFragment();
-						$fragment->appendXML($value);
-						$text->parentNode->replaceChild($fragment, $node);
-					}
-
-					else {
-						$text->nodeValue = $value;
-					}
+				// Before an inline element, or the last text node:
+				else if (
+					$text->nextSibling === null
+					|| (
+						$text->nextSibling instanceof \Doccy\Element
+						&& strlen(trim($text->nextSibling->nodeValue)) < 16
+					)
+				) {
+					$regex = '/((^|\s)\S{0,20})\s(\S{0,20})$/';
 				}
 
-				$index--;
+				// Replace that basterd.
+				if ($regex !== null) {
+					$value = preg_replace(
+						$regex,
+						//utf8_encode("\\1\xa0\\3"),
+						'\1★\3',
+						$value
+					);
+				}
+
+				$text->nodeValue = $value;
 			}
 		}
 	}
