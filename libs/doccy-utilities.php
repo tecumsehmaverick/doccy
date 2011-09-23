@@ -467,8 +467,7 @@
 				if ($regex !== null) {
 					$value = preg_replace(
 						$regex,
-						//utf8_encode("\\1\xa0\\3"),
-						'\1★\3',
+						utf8_encode("\\1\xa0\\3"),
 						$value
 					);
 				}
