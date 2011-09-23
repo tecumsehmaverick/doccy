@@ -49,7 +49,8 @@
 
 			Parser\main($data, $this);
 			Utilities\wrapFloatingText($this, $options);
-			Utilities\prettifyTextNodes($this, $options);
+			//Utilities\prettifyTextNodes($this, $options);
+			Utilities\prettyPrint($this, $options);
 		}
 
 		/**
@@ -71,8 +72,39 @@
 	 */
 	class Element extends \DOMElement {
 		/**
-		 * For preformatted elements that should not be altered
-		 * during prettification.
+		 * Can this element be pretty printed? Preformatted HTML elements
+		 * will return false.
+		 *
+		 * @return boolean
 		 */
-		public $allowPrettification = true;
+		public function isPrettyPrintable() {
+			$parent = $this;
+
+			// This element is not pretty printable:
+			switch (strtolower($this->nodeName)) {
+				case 'code':
+				case 'pre':
+					return false;
+			}
+
+			// One of it's parents is not pretty printable:
+			while ($parent = $parent->parentNode) {
+				if ($parent instanceof Template) continue;
+				if ($parent->isPrettyPrintable()) continue;
+
+				return false;
+			}
+
+			// Ok, go for broke.
+			return true;
+		}
+
+		/**
+		 * Is this element a "block" level element?
+		 *
+		 * @return boolean
+		 */
+		public function isBlockElement() {
+
+		}
 	}

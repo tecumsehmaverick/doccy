@@ -240,6 +240,19 @@
 		}
 	}
 
+	function prettyPrint(\Doccy\Template $document, Options $options) {
+		$xpath = new \DOMXPath($document);
+
+		foreach ($xpath->query('//*') as $node) {
+			if ($node->isPrettyPrintable() === false) continue;
+
+			// Find all text nodes:
+			foreach ($xpath->query('text()', $node) as $text) {
+				var_dump($text->nodeValue);
+			}
+		}
+	}
+
 	/**
 	 * Apply common tweaks to text to make the document appear "prettier".
 	 *
