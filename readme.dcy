@@ -1,0 +1,112 @@
+{h1: Doccy}
+
+Doccy is a "mid-weight" markup language, it isn't as lightweight as Markdown or Textile, instead it fills the middle ground between them and plain old HTML. It is ideally suited to writing technical documentation, as it gives you full control over your document with a lighter syntax that HTML.
+
+
+{h2: Features}
+
+{h3: For writers}
+
+{ul:
+	{li: Easy to learn, unvarying syntax similar to HTML}
+	{li: Implicit paragraphs, no need to write your own {code: <p>} tags}
+	{li: Automatic prettifying of hyphens, quotation marks and widowed words}
+	{li: Ability to paste HTML and XML directly into your documents unaltered}
+	{li: jQuery based auto-completion in HTML textareas using {a @href https://github.com/rowan-lewis/snicked: Snicked}}
+}
+
+
+{h3: For developers}
+
+{ul:
+	{li: {a @href http://php.net/DOMDocument: DOMDocument} based parsing, opening a doccy file gives you access to it as XML}
+	{li: The entire parser fits in less than 250 lines of well documented PHP code}
+	{li: Fully configurable, don't want a feature? Just disable it and it's gone}
+}
+
+
+{h2: The syntax}
+
+Essentially Doccy provides the power of HTML with a simpler syntax that requires less typing. The basic syntax is as follows:
+
+{pre.language-html: \{h1: Top-level heading\}}
+
+Essentially, anything between two curley-braces is considered an element if:
+
+{ol:
+	{li: Immediately following the opening brace, a valid element name is found,}
+	{li: followed by whitespace or attributes,}
+	{li: and finaly a colon ({code: :}).}
+}
+
+What about attributes, element IDs and class names?
+
+{dl:
+	{dt: Attributes}
+	{dd: Attributes can be set using the "at" symbol ({code: @}) followed by the attribute name and value: {code: @href http://google.com/}.}
+	{dt: Class attributes}
+	{dd: You can set classes on an element using a full-stop ({code: .}) followed by a valid class name: {code: .class.name}.}
+	{dt: Data attributes}
+	{dd: You can also set HTML5 data attributes using the percent symbol ({code: %}) followed by the attribute name and value: {code: %highlight-syntax php}.}
+	{dt: ID attributes}
+	{dd: Finally, you can specify the ID attribute of an element using the hash symbol ({code: #}) followed by the value of the id: {code: #main-header}.}
+}
+
+Ok, but how on earth do you write Doccy syntax inside of a Doccy document? Simple actually, just escape using the backslash symbol:
+
+{pre: \\{code: \\\{p: For example.\\\}\\}}
+
+Also, if you're not using the above described element syntax, there's no need to use backslashes to escape:
+
+{pre: {this is perfectly fine.}}
+
+
+{h2: Quick examples}
+
+{h3: Combining classes and element IDs}
+
+{pre: \{h1#main-header.some.class: Top-level heading\}}
+
+You do not have to run the attributes up together, the following is also perfectly valid:
+
+{pre: \{h1 #main-header .some .class: Top-level heading\}}
+
+Either way, the output would look like the following:
+
+{pre.language-html: <h1 id="main-header" class="some class">...}
+
+
+{h3: Attributes and data attributes}
+
+{pre: \{h1 @class some class %syntax php: Top-level heading\}}
+
+This will output:
+
+{pre.language-html: <h1 class="some class" data-syntax="php">...}
+
+
+{h3:  Nested elements}
+
+You can of course nest elements like you would in HTML:
+
+{pre:
+\{h1: This is my \{em: awesome\} header\}}
+
+This will output:
+
+{pre.language-html: <h1>This is my <em>awesome</em> header</h1>}
+
+
+{h2: How to get it?}
+
+You can find the {a @href https://github.com/rowan-lewis/doccy_text_formatter: Symphony CMS extension on github}, to add it to your site run the following:
+
+{pre:
+cd extensions
+git clone git://github.com/rowan-lewis/doccy_text_formatter.git
+cd doccy_text_formatter
+git submodule update --init}
+
+Then jump into Symphony and enable the "Text Formatter: Doccy" extension.
+
+You can also get the {a @href https://github.com/rowan-lewis/doccy: Doccy source code} on github.
