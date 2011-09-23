@@ -240,312 +240,194 @@
 		}
 	}
 
-	function prettyPrint(\Doccy\Template $document, Options $options) {
-		$xpath = new \DOMXPath($document);
-		$primary_search = $primary_replace = array();
-		$secondary_search = $secondary_replace = array();
-
-		// Make quotation marks pretty:
-		if ($options->pretty_quotation_marks) {
-			$primary_search += array(
-				10 => '/(\w)\'(\w)|(\s)\'(\d+\w?)\b(?!\')/',	// apostrophe's
-				11 => '/(\S)\'(?=\s|[[:punct:]]|<|$)/',			// single closing
-				12 => '/\'/',									// single opening
-				13 => '/(\S)\"(?=\s|[[:punct:]]|<|$)/',			// double closing
-				14 => '/"/'										// double opening
-			);
-			$primary_replace += array(
-				10 => '\1&#8217;\2',							// apostrophe's
-				11 => '\1&#8217;',								// single closing
-				12 => '&#8216;',								// single opening
-				13 => '\1&#8221;',								// double closing
-				14 => '&#8220;'									// double opening
-			);
-		}
-
-		// Make sentences pretty:
-		if ($options->double_sentence_spacing) {
-			$primary_search += array(
-				20 => '/([!?.])(?:[ ])/'
-			);
-			$primary_replace += array(
-				20 => '\1&#160; '
-			);
-		}
-
-		// Make acronyms pretty:
-		if ($options->convert_textual_elements) {
-			$primary_search += array(
-				30 => '/\b([A-Z][A-Z0-9]{2,})\b(?:[(]([^)]*)[)])/'
-			);
-			$primary_replace += array(
-				30 => '<acronym title="\2">\1</acronym>'
-			);
-		}
-
-		// Make ellipses pretty:
-		if ($options->pretty_ellipses) {
-			$primary_search += array(
-				40 => '/\.{3}/'
-			);
-			$primary_replace += array(
-				40 => '\1&#8230;'
-			);
-		}
-
-		// Make hyphens pretty:
-		if ($options->pretty_hyphens) {
-			$primary_search += array(
-				50 => '/--/',		// em dash
-				51 => '/-/'			// en dash
-			);
-			$primary_replace += array(
-				50 => '&#8212;',	// em dash
-				51 => '&#8211;'		// en dash
-			);
-		}
-
-		// Prevent widows:
-		if ($options->prevent_widowed_words) {
-			$secondary_search += array(
-				10 => '/((^|\s)\S{0,20})\s(\S{0,20})$/'
-			);
-			$secondary_replace += array(
-				10 => '\1&#160;\3'
-			);
-		}
-
-		var_dump($primary_search, $primary_replace);
-
-		// Find all elements:
-		foreach ($xpath->query('//*') as $node) {
-			if ($node->isPrettyPrintable() === false) continue;
-
-			// Cancel any operations that cannot span block level:
-			if ($node->isBlockLevel()) {
-				$single_quote_open = $double_quote_open = false;
-			}
-
-			// Find all text nodes:
-			foreach ($xpath->query('text()', $node) as $text) {
-				$value = $text->nodeValue;
-
-				$value = preg_replace($primary_search, $primary_replace, $value);
-				$value = preg_replace($secondary_search, $secondary_replace, $value);
-
-				$text->nodeValue = $value;
-			}
-		}
-	}
-
 	/**
 	 * Apply common tweaks to text to make the document appear "prettier".
 	 *
 	 * @param DOMDocument $document
 	 */
-	function prettifyTextNodes(\DOMDocument $document, Options $options) {
+	function prettyPrintText(\Doccy\Template $document, Options $options) {
 		$xpath = new \DOMXPath($document);
-		$nodes = array();
-		$results = $xpath->query('
-			//address | //caption
-			| //td | //th
-			| //h1 | //h2 | //h3 | //h4 | //h5 | //h6
-			| //li | //dt | //dd
-			| //p
-		');
+		$search = $replace = array();
 
-		// Find nodes that may contain prettyable bits:
-		foreach ($results as $node) {
-			array_unshift($nodes, $node);
+		// Make quotation marks pretty:
+		if ($options->pretty_quotation_marks) {
+			$search += array(
+				100 => '/(\w)\'(\w)|(\s)\'(\d+\w?)\b(?!\')/',	// apostrophe's
+				101 => '/(\S)\'(?=\s|[[:punct:]]|<|$)/',		// single closing
+				102 => '/\'/',									// single opening
+				103 => '/(\S)\"(?=\s|[[:punct:]]|<|$)/',		// double closing
+				104 => '/"/'									// double opening
+			);
+			$replace += array(
+				100 => '\1’\2',									// apostrophe's
+				101 => '\1’'	,								// single closing
+				102 => '‘',										// single opening
+				103 => '\1”',									// double closing
+				104 => '“'										// double opening
+			);
 		}
 
-		// Loop through the nodes, now in reverse order:
-		foreach ($nodes as $node) {
-			$search = $replace = array();
-			$content = '';
+		// Make sentences pretty:
+		if ($options->double_sentence_spacing) {
+			$search += array(
+				110 => '/([!?.])(?:[ ])/'
+			);
+			$replace += array(
+				110 => '\1&#160; '
+			);
+		}
 
-			// Find content:
-			while ($node->hasChildNodes()) {
-				$content .= $document->saveXML($node->firstChild);
-				$node->removeChild($node->firstChild);
-			}
+		// Make acronyms pretty:
+		if ($options->convert_textual_elements) {
+			$search += array(
+				120 => '/\b([A-Z][A-Z0-9]{2,})\b(?:[(]([^)]*)[)])/'
+			);
+			$replace += array(
+				120 => '<acronym title="\2">\1</acronym>'
+			);
+		}
 
-			// Make quotation marks pretty:
-			if ($options->pretty_quotation_marks) {
-				$search = array_merge(
-					$search,
-					array(
-						'/(\w)\'(\w)|(\s)\'(\d+\w?)\b(?!\')/',	// apostrophe's
-						'/(\S)\'(?=\s|[[:punct:]]|<|$)/',		// single closing
-						'/\'/',									// single opening
-						'/(\S)\"(?=\s|[[:punct:]]|<|$)/',		// double closing
-						'/"/',									// double opening
-					)
-				);
-				$replace = array_merge(
-					$replace,
-					array(
-						'\1&#8217;\2',							// apostrophe's
-						'\1&#8217;',							// single closing
-						'&#8216;',								// single opening
-						'\1&#8221;',							// double closing
-						'&#8220;',								// double opening
-					)
-				);
-			}
+		// Make ellipses pretty:
+		if ($options->pretty_ellipses) {
+			$search += array(
+				130 => '/\.{3}/'
+			);
+			$replace += array(
+				130 => '\1…'
+			);
+		}
 
-			// Make sentences pretty:
-			if ($options->double_sentence_spacing) {
-				$search = array_merge(
-					$search,
-					array(
-						'/([!?.])(?:[ ])/',
-					)
-				);
-				$replace = array_merge(
-					$replace,
-					array(
-						'\1&#160; ',
-					)
-				);
-			}
+		// Make hyphens pretty:
+		if ($options->pretty_hyphens) {
+			$search += array(
+				140 => '/--/',	// em dash
+				141 => '/-/'	// en dash
+			);
+			$replace += array(
+				140 => '—',		// em dash
+				141 => '–'		// en dash
+			);
+		}
 
+		if ($options->convert_textual_elements) {
 			// Make acronyms pretty:
+			$search += array(
+				150 => '/\b([A-Z][A-Z0-9]{2,})\b(?:[(]([^)]*)[)])/'
+			);
+			$replace += array(
+				150 => '<acronym title="\2">\1</acronym>'
+			);
+
+			// Wrap dashes:
+			$search += array(
+				160 => '/—/',
+				161 => '/–/'
+			);
+			$replace += array(
+				160 => '<span class="dash em">\0</span>',
+				161 => '<span class="dash en">\0</span>'
+			);
+
+			// Wrap ampersands:
+			$search += array(
+				170 => '/&#38;|&amp;/i'
+			);
+			$replace += array(
+				170 => '<span class="ampersand">\0</span>',
+			);
+
+			// Wrap quotation marks:
+			$search += array(
+				180 => '/‘/',
+				181 => '/’/',
+				182 => '/“/',
+				183 => '/”/',
+				184 => '/«/',
+				185 => '/»/'
+			);
+			$replace += array(
+				180 => '<span class="quote left single">\0</span>',
+				181 => '<span class="quote right single">\0</span>',
+				182 => '<span class="quote left double">\0</span>',
+				183 => '<span class="quote right double">\0</span>',
+				184 => '<span class="quote left angle">\0</span>',
+				185 => '<span class="quote right angle">\0</span>'
+			);
+
+			// Wrap ellipses:
+			$search += array(
+				190 => '/…/'
+			);
+			$replace += array(
+				190 => '<span class="ellipsis">\0</span>',
+			);
+		}
+
+		// Find all text nodes:
+		$nodes = $xpath->query('//text()');
+
+		foreach ($replace as &$val) {
+			$val = html_entity_decode($val, ENT_QUOTES, 'UTF-8');
+		}
+
+		foreach ($nodes as $index => $node) {
+			if ($node->parentNode->isPrettyPrintable() === false) continue;
+
+			$value = $node->nodeValue;
+
+			// Escape nasties:
 			if ($options->convert_textual_elements) {
-				$search = array_merge(
-					$search,
-					array(
-						'/\b([A-Z][A-Z0-9]{2,})\b(?:[(]([^)]*)[)])/',
-					)
-				);
-				$replace = array_merge(
-					$replace,
-					array(
-						'<acronym title="\2">\1</acronym>',
-					)
+				$value = str_replace(
+					array('&', '<', '>'),
+					array('&amp;', '&lt;', '&gt;'),
+					$value
 				);
 			}
 
-			// Make ellipses pretty:
-			if ($options->pretty_ellipses) {
-				$search = array_merge(
-					$search,
-					array(
-						'/\.{3}/',
-					)
-				);
-				$replace = array_merge(
-					$replace,
-					array(
-						'\1&#8230;',
-					)
-				);
-			}
+			// Prevent widowed words:
+			if ($options->prevent_widowed_words) {
+				/**
+				 * Find the last text node in a sentence and
+				 * prevent widowed words.
+				 *
+				 * This implementation is imperfect, The following
+				 * situations would not result in expected behaviour:
+				 *
+				 *	<p><em>This will not be escaped</em></p>
+				 *	<p>This will not <em>be escaped</em></p>
+				 */
+				if (
+					$node->nextSibling === null
+					&& $node->parentNode->isBlockLevel()
+					&& trim($value)
+				) {
+					$value = preg_replace(
+						'/((^|\s)\S{0,20})\s(\S{0,20})$/',
+						'\1&#160;\3',
+						$value
+					);
+				}
 
-			// Make hyphens pretty:
-			if ($options->pretty_hyphens) {
-				$search = array_merge(
-					$search,
-					array(
-						'/--/',			// em dash
-						'/-/',			// en dash
-					)
-				);
-				$replace = array_merge(
-					$replace,
-					array(
-						'&#8212;',		// em dash
-						'&#8211;',		// en dash
-					)
-				);
-			}
-
-			if (!empty($search)) {
-				$lines = preg_split("/(<.*>)/U", $content, -1, PREG_SPLIT_DELIM_CAPTURE);
-				$content = ''; $apply = true;
-
-				foreach ($lines as $line) {
-					// Skip over code samples:
-					if (preg_match('/^<(pre|code)/i', $line)) {
-						$apply = false;
-					}
-
-					else if (preg_match('/$<\/(pre|code)>/i', $line)) {
-						$apply = true;
-					}
-
-					if ($apply && !preg_match("/<.*>/", $line)) {
-						$line = preg_replace($search, $replace, $line);
-					}
-
-					$content .= $line;
+				else {
+					/**
+					 * @todo Alternate implementation?
+					 */
 				}
 			}
 
-			// Prevent widows:
-			if ($options->prevent_widowed_words) {
-				$content = preg_replace(
-					'/((^|\s)\S{0,20})\s(\S{0,20})$/',
-					'\1&#160;\3', $content
-				);
-			}
+			$value = preg_replace($search, $replace, $value);
 
-			// Wrap dashes:
+			//var_dump($value);
+
+			// Markup may have been added, replace with fragment:
 			if ($options->convert_textual_elements) {
-				$content = str_replace(
-					array(
-						'&#8212;',
-						'&#8211;'
-					),
-					array(
-						'<span class="dash em">&#8212;</span>',
-						'<span class="dash en">&#8211;</span>'
-					),
-					$content
-				);
+				$fragment = $document->createDocumentFragment();
+				$fragment->appendXML($value);
+				$node->parentNode->replaceChild($fragment, $node);
 			}
 
-			// Wrap ampersands:
-			if ($options->convert_textual_elements) {
-				$content = preg_replace(
-					'/&#38;|&amp;/i',
-					'<span class="ampersand">&#38;</span>', $content
-				);
+			else {
+				$node->nodeValue = $value;
 			}
-
-		    // Wrap quotation marks:
-			if ($options->convert_textual_elements) {
-				$content = str_replace(
-					array(
-				    	'&#8216;',
-				    	'&#8217;',
-				    	'&#8220;',
-				    	'&#8221;',
-				    	'&#171;',
-				    	'&#187;'
-					),
-					array(
-				    	'<span class="quote left single">&#8216;</span>',
-				    	'<span class="quote right single">&#8217;</span>',
-				    	'<span class="quote left double">&#8220;</span>',
-				    	'<span class="quote right double">&#8221;</span>',
-				    	'<span class="quote left angle">&#8221;</span>',
-				    	'<span class="quote right angle">&#8221;</span>'
-					),
-					$content
-				);
-			}
-
-			// Wrap ellipsis:
-			if ($options->convert_textual_elements) {
-				$content = str_replace(
-					'&#8230;', '<span class="ellipsis">&#8230;</span>', $content
-				);
-			}
-
-			// Replace content:
-			$fragment = $document->createDocumentFragment();
-			$fragment->appendXML($content);
-			$node->appendChild($fragment);
 		}
 	}

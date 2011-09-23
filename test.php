@@ -5,7 +5,7 @@
 	$start = microtime(true);
 	$tpl = new Doccy\Template();
 	$tpl->formatOutput = true;
-	$tpl->parseString("First things first, you'll -- 'need a {code: {em: fresh -- copy}} of Symphony', so head to {a @href http://symphony-cms.com/downloads: the Symphony webite} then download and extract the latest release.");
+	$tpl->parseString("First \"things\" first, CSS(those things) - you'll -- 'need a {code: {em: fresh -- copy}} of & Symphony', so «head» to {a @href http://symphony-cms.com/downloads: the Symphony webite} then download and extract the ... latest release.");
 
 	echo '<pre style="white-space: pre-wrap;">';
 

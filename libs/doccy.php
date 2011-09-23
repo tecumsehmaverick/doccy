@@ -49,8 +49,7 @@
 
 			Parser\main($data, $this);
 			Utilities\wrapFloatingText($this, $options);
-			//Utilities\prettifyTextNodes($this, $options);
-			Utilities\prettyPrint($this, $options);
+			Utilities\prettyPrintText($this, $options);
 		}
 
 		/**
@@ -83,6 +82,9 @@
 			// This element is not pretty printable:
 			switch (strtolower($this->nodeName)) {
 				case 'code':
+				case 'samp':
+				case 'kbd':
+				case 'var':
 				case 'pre':
 					return false;
 			}
@@ -105,6 +107,33 @@
 		 * @return boolean
 		 */
 		public function isBlockLevel() {
+			switch (strtolower($this->nodeName)) {
+				case 'a':
+				case 'abbr':
+				case 'acronym':
+				case 'dfn':
+				case 'em':
+				case 'strong':
+				case 'i':
+				case 'b':
+				case 'big':
+				case 'small':
+				case 'tt':
+				case 'span':
+				case 'cite':
+				case 'del':
+				case 'ins':
+				case 'q':
+				case 'sub':
+				case 'sup':
+				case 'th':
+				case 'td':
+				case 'dt':
+				case 'dd':
+				case 'li':
+					return false;
+			}
 
+			return true;
 		}
 	}
