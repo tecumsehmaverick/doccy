@@ -11,6 +11,9 @@
 	require_once 'doccy-parser.php';
 	require_once 'doccy-utilities.php';
 
+	/**
+	 * Take a Doccy template and make it programmable.
+	 */
 	class Template extends \DOMDocument {
 		/**
 		 * Open a URI and parse it into the template.
@@ -34,6 +37,8 @@
 		 */
 		public function parseString($input, Utilities\Options $options = null) {
 			$data = new \Doccy\Utilities\Data($input);
+
+			$this->registerNodeClass('DOMElement', 'Doccy\\Element');
 			$this->appendChild(
 				$this->createElement('data')
 			);
@@ -61,4 +66,13 @@
 		}
 	}
 
-?>
+	/**
+	 * Represents an element in a Doccy template.
+	 */
+	class Element extends \DOMElement {
+		/**
+		 * For preformatted elements that should not be altered
+		 * during prettification.
+		 */
+		public $allowPrettification = true;
+	}
