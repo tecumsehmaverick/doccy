@@ -102,7 +102,7 @@
 		$ended = false;
 
 		while ($data->valid()) {
-			$token = $data->findToken('%^[a-z][a-z0-9]*|:\s+|(^|\s+)[@#.\%][a-z][a-z0-9\-]*|.+?%');
+			$token = $data->findToken('%^[a-z][a-z0-9]*|[\\\]?:\s+|(^|\s+)[@#.\%][a-z][a-z0-9\-]*|.+?%');
 
 			// Token position located:
 			if (!$token instanceof \Doccy\Utilities\Token) {
@@ -119,7 +119,10 @@
 			}
 
 			// Attribute:
-			else if ($token->value->test('%^\s*@%')) {
+			else if (
+				($token->value->test('%^\s*@%') && is_null($attribute))
+				|| $token->value->test('%^\s+@%')
+			) {
 				list($before, $after) = $data->splitAt($token);
 
 				$attribute = trim($token->value, "@\r\n\t ");
