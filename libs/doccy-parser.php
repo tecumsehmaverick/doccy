@@ -109,32 +109,35 @@
 				break;
 			}
 
+			// Split data:
+			list($before, $after) = $data->splitAt($token);
+
+			// Move data forward:
+			$data = $after;
+
 			// Ends here:
 			if ($token->value->test('%^:\s+%')) {
-				list($before, $after) = $data->splitAt($token);
-
-				$data = $after;
 				$ended = true;
 				break;
 			}
 
 			// Attribute:
-			else if ($token->value->test('%^\s*@%')) {
-				list($before, $after) = $data->splitAt($token);
-
+			else if (
+				($token->value->test('%^\s*@%') && is_null($attribute))
+				|| $token->value->test('%^\s+@%')
+			) {
 				$attribute = trim($token->value, "@\r\n\t ");
 				$attributes[$attribute] = null;
-				$data = $after;
 				continue;
 			}
 
 			// Data attribute:
-			else if ($token->value->test('%^\s*[\%]%')) {
-				list($before, $after) = $data->splitAt($token);
-
+			else if (
+				($token->value->test('%^\s*[\%]%') && is_null($attribute))
+				|| $token->value->test('%^\s+[\%]%')
+			) {
 				$attribute = 'data-' . trim($token->value, "%\r\n\t ");
 				$attributes[$attribute] = null;
-				$data = $after;
 				continue;
 			}
 
@@ -143,8 +146,6 @@
 				($token->value->test('%^\s*[.]%') && is_null($attribute))
 				|| $token->value->test('%^\s+[.]%')
 			) {
-				list($before, $after) = $data->splitAt($token);
-
 				$value = trim($token->value, ".\r\n\t ");
 
 				$attributes['class'] = (
@@ -153,7 +154,7 @@
 						: $value
 				);
 
-				$data = $after;
+				$attribute = null;
 				continue;
 			}
 
@@ -162,18 +163,14 @@
 				($token->value->test('%^\s*#%') && is_null($attribute))
 				|| $token->value->test('%^\s+#%')
 			) {
-				list($before, $after) = $data->splitAt($token);
-
 				$value = trim($token->value, "#\r\n\t ");
 				$attributes['id'] = $value;
-				$data = $after;
+				$attribute = null;
 				continue;
 			}
 
 			// Attribute value:
 			else if (!is_null($attribute)) {
-				list($before, $after) = $data->splitAt($token);
-
 				// Trim any spaces off the start:
 				if (strlen($attributes[$attribute]) == 0) {
 					$value = ltrim($token->value);
@@ -189,16 +186,17 @@
 				}
 
 				$attributes[$attribute] .= $value;
-				$data = $after;
 				continue;
 			}
 
 			// Element name:
-			else if ($token->value->test('%^[a-z][a-z0-9]*$%')) {
-				list($before, $after) = $data->splitAt($token);
-
+			else if ($token->value->test('%^[a-z][a-z0-9]*$%') && is_null($name)) {
 				$name = (string)$token->value;
-				$data = $after;
+				continue;
+			}
+
+			// Junk whitespace:
+			else if ($token->value->test('%^\s+$%')) {
 				continue;
 			}
 
