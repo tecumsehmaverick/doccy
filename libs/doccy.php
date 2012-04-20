@@ -7,9 +7,12 @@
 	 */
 
 	namespace Doccy;
+	use Doccy\Utilities\Options;
+	use StringParser\Data;
 
 	require_once 'doccy-parser.php';
 	require_once 'doccy-utilities.php';
+	require_once 'string-parser.php';
 
 	/**
 	 * Take a Doccy template and make it programmable.
@@ -20,7 +23,7 @@
 		 *
 		 * @param string $uri
 		 */
-		public function parseURI($uri, Utilities\Options $options = null) {
+		public function parseURI($uri, Options $options = null) {
 			if (file_exists($uri) === false) {
 				throw new Exception(sprintf(
 					"File '%s' does not exist.", $uri
@@ -35,8 +38,8 @@
 		 *
 		 * @param string $input
 		 */
-		public function parseString($input, Utilities\Options $options = null) {
-			$data = new \Doccy\Utilities\Data($input);
+		public function parseString($input, Options $options = null) {
+			$data = new Data($input);
 
 			$this->registerNodeClass('DOMElement', 'Doccy\\Element');
 			$this->appendChild(
@@ -44,7 +47,7 @@
 			);
 
 			if ($options === null) {
-				$options = new Utilities\Options();
+				$options = new Options();
 			}
 
 			Parser\main($data, $this);
