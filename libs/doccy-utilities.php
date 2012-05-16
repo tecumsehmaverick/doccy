@@ -23,6 +23,11 @@
 		public $double_sentence_spacing = false;
 
 		/**
+		 * Enable pretty printing functions.
+		 */
+		public $pretty_print_text = true;
+
+		/**
 		 * Insert a non breaking space into the last sentence
 		 * of a paragraph or heading.
 		 */
@@ -42,6 +47,11 @@
 		 * Convert quotation marks to typographers quotation marks
 		 */
 		public $pretty_quotation_marks = true;
+
+		/**
+		 * Wrap floating (un-contained) text with paragraph elements
+		 */
+		public $wrap_floating_text = true;
 	}
 
 	/**
@@ -287,7 +297,7 @@
 			if ($options->convert_textual_elements) {
 				$fragment = $document->createDocumentFragment();
 				$fragment->appendXML($value);
-				$text->parentNode->replaceChild($fragment, $node);
+				$text->parentNode->replaceChild($fragment, $text);
 			}
 
 			else {

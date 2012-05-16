@@ -51,8 +51,14 @@
 			}
 
 			Parser\main($data, $this);
-			Utilities\wrapFloatingText($this, $options);
-			Utilities\prettyPrintText($this, $options);
+
+			if ($options->wrap_floating_text) {
+				Utilities\wrapFloatingText($this, $options);
+			}
+
+			if ($options->pretty_print_text) {
+				Utilities\prettyPrintText($this, $options);
+			}
 		}
 
 		/**
