@@ -5,6 +5,10 @@
 	 */
 
 	namespace Doccy\Parser;
+	use Doccy\Element;
+	use Doccy\Template;
+	use StringParser\Data;
+	use StringParser\Token;
 
 	/**
 	 * Main Doccy parser loop, finds the start and end of elements.
@@ -12,81 +16,64 @@
 	 * @param Doccy\Utilities\Data $data
 	 * @param DOMElement $parent
 	 */
-	function main(\Doccy\Utilities\Data $data, \Doccy\Template $template) {
+	function main(Data $data, Template $template) {
 		$parent = $template->documentElement;
 		$skip_next_close = 0;
 
 		while ($data->valid()) {
-			$token = $data->findToken('%(\\\[{}])|[{}]|[^{}\\\]+|\\\%');
+			$token = $data->after('%(\\\[{}])|[{}]|[^{}\\\]+|\\\%');
 
 			// Token position located:
-			if ($token instanceof \Doccy\Utilities\Token) {
-				list($before, $after) = $data->splitAt($token);
+			if (!$token instanceof Token) break;
 
-				// Open:
-				if ($token->value == '{') {
-					$result = openTag($after, $parent);
+			// Move data to the token:
+			$data->move($token);
 
-					// Not a valid open tag:
-					if ($result === false) {
-						$node = $parent->ownerDocument->createTextNode($token->value);
-						$parent->appendChild($node);
+			// Open:
+			if ($token->value == '{') {
+				$element = openTag($data, $parent);
 
-						$data = $after;
-						$skip_next_close++;
-					}
-
-					else {
-						list($after, $element) = $result;
-
-						$data = $after;
-						$parent = $element;
-					}
-
-					continue;
-				}
-
-				// Close token:
-				else if ($token->value == '}') {
-					if ($skip_next_close > 0) {
-						$node = $parent->ownerDocument->createTextNode($token->value);
-						$parent->appendChild($node);
-
-						$skip_next_close--;
-					}
-
-					else if (isset($parent->parentNode)) {
-						$parent = $parent->parentNode;
-					}
-
-					$data = $after;
-					continue;
-				}
-
-				// Escaped open/close token:
-				else if ($token->value == '\\{' || $token->value == '\\}') {
-					list($before, $after) = $data->splitAt($token);
-
-					$node = $parent->ownerDocument->createTextNode(trim($token->value, '\\'));
-					$parent->appendChild($node);
-
-					$data = $after;
-					continue;
-				}
-
-				// Text:
-				else {
-					list($before, $after) = $data->splitAt($token);
-
+				// Not a valid open tag:
+				if ($element === false) {
 					$node = $parent->ownerDocument->createTextNode($token->value);
 					$parent->appendChild($node);
+					$data->move($token);
+					$skip_next_close++;
+				}
 
-					$data = $after;
-					continue;
+				else {
+					$parent = $element;
 				}
 			}
 
-			break;
+			// Close token:
+			else if ($token->value == '}') {
+				if ($skip_next_close > 0) {
+					$node = $parent->ownerDocument->createTextNode($token->value);
+					$parent->appendChild($node);
+					$skip_next_close--;
+				}
+
+				else if (isset($parent->parentNode)) {
+					$parent = $parent->parentNode;
+				}
+			}
+
+			// Escaped open/close token:
+			else if ($token->value == '\\{' || $token->value == '\\}') {
+				$node = $parent->ownerDocument->createTextNode(
+					trim($token->value, '\\')
+				);
+				$parent->appendChild($node);
+			}
+
+			// Text:
+			else {
+				$node = $parent->ownerDocument->createTextNode($token->value);
+				$parent->appendChild($node);
+			}
+
+			continue;
 		}
 	}
 
@@ -96,58 +83,49 @@
 	 * @param Doccy\Utilities\Data $data
 	 * @param DOMElement $parent
 	 */
-	function openTag(\Doccy\Utilities\Data $data, \DOMElement $parent) {
+	function openTag(Data $data, Element $parent) {
 		$attributes = array();
 		$name = $attribute = null;
 		$ended = false;
 
 		while ($data->valid()) {
-			$token = $data->findToken('%^[a-z][a-z0-9]*|[\\\]?:\s+|(^|\s+)[@#.\%][a-z][a-z0-9\-]*|.+?%');
+			$token = $data->after('%^[a-z][a-z0-9]*|[\\\]?:\s+|(^|\s+)[@#.\%][a-z][a-z0-9\-]*|.+?%');
 
 			// Token position located:
-			if (!$token instanceof \Doccy\Utilities\Token) {
-				break;
-			}
+			if (!$token instanceof Token) break;
+
+			// Move data to the token:
+			$data->move($token);
 
 			// Ends here:
-			if ($token->value->test('%^:\s+%')) {
-				list($before, $after) = $data->splitAt($token);
-
-				$data = $after;
+			if ($token->test('%^:\s+%')) {
 				$ended = true;
 				break;
 			}
 
 			// Attribute:
 			else if (
-				($token->value->test('%^\s*@%') && is_null($attribute))
-				|| $token->value->test('%^\s+@%')
+				($token->test('%^\s*@%') && is_null($attribute))
+				|| $token->test('%^\s+@%')
 			) {
-				list($before, $after) = $data->splitAt($token);
-
 				$attribute = trim($token->value, "@\r\n\t ");
 				$attributes[$attribute] = null;
-				$data = $after;
-				continue;
 			}
 
 			// Data attribute:
-			else if ($token->value->test('%^\s*[\%]%')) {
-				list($before, $after) = $data->splitAt($token);
-
+			else if (
+				($token->test('%^\s*[\%]%') && is_null($attribute))
+				|| $token->test('%^\s+[\%]%')
+			) {
 				$attribute = 'data-' . trim($token->value, "%\r\n\t ");
 				$attributes[$attribute] = null;
-				$data = $after;
-				continue;
 			}
 
 			// Class attribute:
 			else if (
-				($token->value->test('%^\s*[.]%') && is_null($attribute))
-				|| $token->value->test('%^\s+[.]%')
+				($token->test('%^\s*[.]%') && is_null($attribute))
+				|| $token->test('%^\s+[.]%')
 			) {
-				list($before, $after) = $data->splitAt($token);
-
 				$value = trim($token->value, ".\r\n\t ");
 
 				$attributes['class'] = (
@@ -156,27 +134,21 @@
 						: $value
 				);
 
-				$data = $after;
-				continue;
+				$attribute = null;
 			}
 
 			// ID attribute:
 			else if (
-				($token->value->test('%^\s*#%') && is_null($attribute))
-				|| $token->value->test('%^\s+#%')
+				($token->test('%^\s*#%') && is_null($attribute))
+				|| $token->test('%^\s+#%')
 			) {
-				list($before, $after) = $data->splitAt($token);
-
 				$value = trim($token->value, "#\r\n\t ");
 				$attributes['id'] = $value;
-				$data = $after;
-				continue;
+				$attribute = null;
 			}
 
 			// Attribute value:
 			else if (!is_null($attribute)) {
-				list($before, $after) = $data->splitAt($token);
-
 				// Trim any spaces off the start:
 				if (strlen($attributes[$attribute]) == 0) {
 					$value = ltrim($token->value);
@@ -192,20 +164,19 @@
 				}
 
 				$attributes[$attribute] .= $value;
-				$data = $after;
-				continue;
 			}
 
 			// Element name:
-			else if ($token->value->test('%^[a-z][a-z0-9]*$%')) {
-				list($before, $after) = $data->splitAt($token);
-
-				$name = (string)$token->value;
-				$data = $after;
-				continue;
+			else if ($token->test('%^[a-z][a-z0-9]*$%') && is_null($name)) {
+				$name = $token->value;
 			}
 
-			break;
+			// Break on on-whitespace:
+			else if ($token->test('%^\s+$%') === false) {
+				break;
+			}
+
+			continue;
 		}
 
 		// Not a valid element:
@@ -222,9 +193,6 @@
 				$element->setAttribute($name, $value);
 			}
 
-			return array(
-				$data,
-				$element
-			);
+			return $element;
 		}
 	}

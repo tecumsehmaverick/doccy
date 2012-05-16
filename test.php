@@ -4,7 +4,6 @@
 
 	$start = microtime(true);
 	$tpl = new Doccy\Template();
-	$tpl->formatOutput = true;
 	$tpl->parseURI('readme.dcy');
 
 	echo '<pre style="white-space: pre-wrap;">';
