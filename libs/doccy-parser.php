@@ -31,7 +31,7 @@
 
 			// Open:
 			if ($token->value == '{') {
-				$element = openTag($data, $parent);
+				$element = opening_tag($data, $parent);
 
 				// Not a valid open tag:
 				if ($element === false) {
@@ -83,7 +83,7 @@
 	 * @param Doccy\Utilities\Data $data
 	 * @param DOMElement $parent
 	 */
-	function openTag(Data $data, Element $parent) {
+	function opening_tag(Data $data, Element $parent) {
 		$attributes = array();
 		$name = $attribute = null;
 		$ended = false;
@@ -104,19 +104,19 @@
 			}
 
 			// Attribute:
-			else if (testAttribute($token, $attribute, '@')) {
+			else if (is_attribute($token, $attribute, '@')) {
 				$attribute = trim($token->value, "@\r\n\t ");
 				$attributes[$attribute] = null;
 			}
 
 			// Data attribute:
-			else if (testAttribute($token, $attribute, '[\%]')) {
+			else if (is_attribute($token, $attribute, '[\%]')) {
 				$attribute = 'data-' . trim($token->value, "%\r\n\t ");
 				$attributes[$attribute] = null;
 			}
 
 			// Class attribute:
-			else if (testAttribute($token, $attribute, '[.]')) {
+			else if (is_attribute($token, $attribute, '[.]')) {
 				$value = trim($token->value, ".\r\n\t ");
 
 				$attributes['class'] = (
@@ -129,7 +129,7 @@
 			}
 
 			// ID attribute:
-			else if (testAttribute($token, $attribute, '#')) {
+			else if (is_attribute($token, $attribute, '#')) {
 				$value = trim($token->value, "#\r\n\t ");
 				$attributes['id'] = $value;
 				$attribute = null;
@@ -137,9 +137,9 @@
 
 			// Quoted attribute value:
 			else if ($attribute !== null && $token->value == '"') {
-				$value = openString($data);
-
-				exit;
+				$value = attribute_value($data);
+				$attributes[$attribute] = $value;
+				$attribute = null;
 			}
 
 			// Attribute value:
@@ -192,17 +192,20 @@
 		}
 	}
 
-
-	function openString(Data $data) {
+	/**
+	 * Parse double quoted attribute values.
+	 *
+	 * @param Data $data
+	 * @return string
+	 */
+	function attribute_value(Data $data) {
 		$value = '';
 
 		while ($data->valid()) {
-			$token = $data->after('%[\\\\]|[\\\]"|"|.[^\\\"]+%');
+			$token = $data->after('%[\\\][\\\"]|"|.[^\\\"]+%');
 
 			// Token position located:
 			if (!$token instanceof Token) break;
-
-			var_dump($token);
 
 			// Move data to the token:
 			$data->move($token);
@@ -212,12 +215,16 @@
 				break;
 			}
 
+			else if ($token->value == '\\"') {
+				$value .= '"';
+			}
+
 			else {
 				$value .= $token->value;
 			}
 		}
 
-		var_dump($value); exit;
+		return $value;
 	}
 
 	/**
@@ -231,7 +238,7 @@
 	 * @param string $expression
 	 * @return boolean
 	 */
-	function testAttribute(Token $token, $attribute, $expression) {
+	function is_attribute(Token $token, $attribute, $expression) {
 		$without_space = '%^\s*' . $expression . '%';
 		$with_space = '%^\s+' . $expression . '%';
 
