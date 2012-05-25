@@ -3,10 +3,13 @@
 	/**
 	 * Doccy is a simple brace based text formatter.
 	 *
-	 * @package doccy
+	 * @package Doccy
 	 */
 
 	namespace Doccy;
+	use DOMDocument;
+	use DOMElement;
+	use Exception;
 	use Doccy\Utilities\Options;
 	use StringParser\Data;
 
@@ -17,11 +20,12 @@
 	/**
 	 * Take a Doccy template and make it programmable.
 	 */
-	class Template extends \DOMDocument {
+	class Template extends DOMDocument {
 		/**
 		 * Open a URI and parse it into the template.
 		 *
 		 * @param string $uri
+		 * @param Options $options
 		 */
 		public function parseURI($uri, Options $options = null) {
 			if (file_exists($uri) === false) {
@@ -37,6 +41,7 @@
 		 * Parse a string into the template.
 		 *
 		 * @param string $input
+		 * @param Options $options
 		 */
 		public function parseString($input, Options $options = null) {
 			$data = new Data($input);
@@ -78,7 +83,7 @@
 	/**
 	 * Represents an element in a Doccy template.
 	 */
-	class Element extends \DOMElement {
+	class Element extends DOMElement {
 		/**
 		 * Can this element be pretty printed? Preformatted HTML elements
 		 * will return false.
@@ -99,10 +104,18 @@
 			}
 
 			// One of it's parents is not pretty printable:
+			/*
 			while ($parent = $parent->parentNode) {
 				if ($parent instanceof Template) continue;
 				if ($parent->isPrettyPrintable()) continue;
 
+				return false;
+			}
+			*/
+
+			$parent = $parent->parentNode;
+
+			if (($parent instanceof Template) === false && $parent->isPrettyPrintable() === false) {
 				return false;
 			}
 
@@ -151,7 +164,7 @@
 		 *
 		 * @return boolean
 		 */
-		public function isListElement() {
+		public function isListLevel() {
 			switch (strtolower($this->nodeName)) {
 				case 'ol':
 				case 'ul':

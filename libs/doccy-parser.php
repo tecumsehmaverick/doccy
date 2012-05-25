@@ -98,34 +98,25 @@
 			$data->move($token);
 
 			// Ends here:
-			if ($token->test('%^:\s+%')) {
+			if (strpos($token->value, ':') === 0 && $token->test('%^:\s+%')) {
 				$ended = true;
 				break;
 			}
 
 			// Attribute:
-			else if (
-				($token->test('%^\s*@%') && is_null($attribute))
-				|| $token->test('%^\s+@%')
-			) {
+			else if (testAttribute($token, $attribute, '@')) {
 				$attribute = trim($token->value, "@\r\n\t ");
 				$attributes[$attribute] = null;
 			}
 
 			// Data attribute:
-			else if (
-				($token->test('%^\s*[\%]%') && is_null($attribute))
-				|| $token->test('%^\s+[\%]%')
-			) {
+			else if (testAttribute($token, $attribute, '[\%]')) {
 				$attribute = 'data-' . trim($token->value, "%\r\n\t ");
 				$attributes[$attribute] = null;
 			}
 
 			// Class attribute:
-			else if (
-				($token->test('%^\s*[.]%') && is_null($attribute))
-				|| $token->test('%^\s+[.]%')
-			) {
+			else if (testAttribute($token, $attribute, '[.]')) {
 				$value = trim($token->value, ".\r\n\t ");
 
 				$attributes['class'] = (
@@ -138,17 +129,21 @@
 			}
 
 			// ID attribute:
-			else if (
-				($token->test('%^\s*#%') && is_null($attribute))
-				|| $token->test('%^\s+#%')
-			) {
+			else if (testAttribute($token, $attribute, '#')) {
 				$value = trim($token->value, "#\r\n\t ");
 				$attributes['id'] = $value;
 				$attribute = null;
 			}
 
+			// Quoted attribute value:
+			else if ($attribute !== null && $token->value == '"') {
+				$value = openString($data);
+
+				exit;
+			}
+
 			// Attribute value:
-			else if (!is_null($attribute)) {
+			else if ($attribute !== null) {
 				// Trim any spaces off the start:
 				if (strlen($attributes[$attribute]) == 0) {
 					$value = ltrim($token->value);
@@ -167,7 +162,7 @@
 			}
 
 			// Element name:
-			else if ($token->test('%^[a-z][a-z0-9]*$%') && is_null($name)) {
+			else if ($name === null && $token->test('%^[a-z][a-z0-9]*$%')) {
 				$name = $token->value;
 			}
 
@@ -180,7 +175,7 @@
 		}
 
 		// Not a valid element:
-		if (is_null($name) || $ended === false) {
+		if ($name === null || $ended === false) {
 			return false;
 		}
 
@@ -195,4 +190,53 @@
 
 			return $element;
 		}
+	}
+
+
+	function openString(Data $data) {
+		$value = '';
+
+		while ($data->valid()) {
+			$token = $data->after('%[\\\\]|[\\\]"|"|.[^\\\"]+%');
+
+			// Token position located:
+			if (!$token instanceof Token) break;
+
+			var_dump($token);
+
+			// Move data to the token:
+			$data->move($token);
+
+			// String ends:
+			if ($token->value == '"') {
+				break;
+			}
+
+			else {
+				$value .= $token->value;
+			}
+		}
+
+		var_dump($value); exit;
+	}
+
+	/**
+	 * Determine if an attribute is being set.
+	 *
+	 * The first time an attribute is set it should not start with a space, any
+	 * following times it should.
+	 *
+	 * @param Token $token
+	 * @param string|null $attribute
+	 * @param string $expression
+	 * @return boolean
+	 */
+	function testAttribute(Token $token, $attribute, $expression) {
+		$without_space = '%^\s*' . $expression . '%';
+		$with_space = '%^\s+' . $expression . '%';
+
+		return (
+			($attribute === null && $token->test($without_space))
+			|| $token->test($with_space)
+		);
 	}

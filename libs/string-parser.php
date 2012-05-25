@@ -1,8 +1,9 @@
 <?php
 
 	/**
-	 * @package string-parser
-	 * @link http://nbsp.io/development/stringparser-your-guide-to-sanity#api
+	 * Reusable utility for parsing strings.
+	 *
+	 * @package StringParser
 	 */
 
 	namespace StringParser;
@@ -164,6 +165,11 @@
 			unset($this->after, $this->before);
 		}
 
+		/**
+		 * Is there still data to parse?
+		 *
+		 * @return boolean
+		 */
 		public function valid() {
 			return $this->end < $this->size;
 		}
@@ -173,15 +179,26 @@
 	 * Represents a value discovered in data, including the position and length.
 	 */
 	class Token {
+		/**
+		 * The position that the Token starts at.
+		 */
 		public $begin;
+
+		/**
+		 * The position that the Token ends at.
+		 */
 		public $end;
+
+		/**
+		 * The value between the start and end positions.
+		 */
 		public $value;
 
 		/**
 		 * Create a new Token object.
 		 *
 		 * @param string $value
-		 * @param integer $position
+		 * @param integer $begin
 		 */
 		public function __construct($value, $begin) {
 			$this->begin = $begin;

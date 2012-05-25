@@ -1,10 +1,14 @@
 <?php
 
 	/**
-	 * @package doccy
+	 * Utilities for processing Doccy documents.
+	 *
+	 * @package Doccy
 	 */
 
 	namespace Doccy\Utilities;
+	use DOMXPath;
+	use Doccy\Template;
 
 	/**
 	 * Standard options for customised formatting.
@@ -57,10 +61,11 @@
 	/**
 	 * Wrap floating pieces of text in paragraph elements.
 	 *
-	 * @param DOMDocument $document
+	 * @param Template $document
+	 * @param Options $options
 	 */
-	function wrapFloatingText(\DOMDocument $document, Options $options) {
-		$xpath = new \DOMXPath($document);
+	function wrapFloatingText(Template $document, Options $options) {
+		$xpath = new DOMXPath($document);
 		$nodes = array(); $breaks = array(
 			'section', 'article', 'aside', 'header', 'footer', 'nav',
 			'dialog', 'figure', 'address', 'p', 'hr', 'pre',
@@ -155,10 +160,11 @@
 	/**
 	 * Apply common tweaks to text to make the document appear "prettier".
 	 *
-	 * @param DOMDocument $document
+	 * @param Template $document
+	 * @param Options $options
 	 */
-	function prettyPrintText(\Doccy\Template $document, Options $options) {
-		$xpath = new \DOMXPath($document);
+	function prettyPrintText(Template $document, Options $options) {
+		$xpath = new DOMXPath($document);
 		$search = $replace = array();
 
 		// Make quotation marks pretty:
